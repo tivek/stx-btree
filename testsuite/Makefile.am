@@ -16,4 +16,4 @@ testsuite_SOURCES += DumpRestoreTest.cc
 testsuite_SOURCES += RelationTest.cc
 testsuite_SOURCES += BulkLoadTest.cc
 
-AM_CXXFLAGS = -W -Wall -Wold-style-cast -Wshadow -DBTREE_DEBUG -I$(top_srcdir)/include
+AM_CXXFLAGS = -W -Wall -Wold-style-cast -std=c++11 -Wshadow -DBTREE_DEBUG -I$(top_srcdir)/include

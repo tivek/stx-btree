@@ -2,6 +2,8 @@
 
 SUBDIRS = . include testsuite speedtest memprofile wxbtreedemo
 
+ACLOCAL_AMFLAGS = ${ACLOCAL_FLAGS} -I m4
+
 AM_CFLAGS = -W -Wall -I$(srcdir)/include
 AM_CXXFLAGS = -W -Wall -Wold-style-cast -DBTREE_DEBUG -I$(srcdir)/include
 

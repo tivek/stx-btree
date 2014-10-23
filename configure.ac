@@ -5,6 +5,7 @@ AC_PREREQ(2.59)
 AC_INIT(stx-btree, 0.9)
 AC_CONFIG_SRCDIR([include/stx/btree.h])
 AC_CONFIG_AUX_DIR(scripts)
+AC_CONFIG_MACRO_DIR(m4)
 AC_CANONICAL_HOST
 
 AM_INIT_AUTOMAKE(foreign)
@@ -24,6 +25,9 @@ AC_PROG_CXX
 AC_PROG_CC
 
 AC_LANG([C++])
+
+# require C++11
+AX_CXX_COMPILE_STDCXX_11
 
 # enable full optimization by configure switch
 
