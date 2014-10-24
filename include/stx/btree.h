@@ -41,6 +41,7 @@
 #include <functional>
 #include <istream>
 #include <ostream>
+#include <type_traits>
 #include <memory>
 #include <cstddef>
 #include <assert.h>
@@ -2089,23 +2090,37 @@ public:
     {
         return insert_start(x.first, x.second);
     }
+    
+    /// Attempt to move-insert a key/data pair into the B+ tree. If the tree does not
+    /// allow duplicate keys, then the insert may fail if it is already
+    /// present.
+    inline std::pair<iterator, bool> insert(pair_type&& x)
+    {
+        return insert_start(std::move(x.first), std::move(x.second));
+    }
 
     /// Attempt to insert a key/data pair into the B+ tree. Beware that if
     /// key_type == data_type, then the template iterator insert() is called
     /// instead. If the tree does not allow duplicate keys, then the insert may
     /// fail if it is already present.
-    inline std::pair<iterator, bool> insert(const key_type& key, const data_type& data)
+    template<typename KeyType, typename DataType,
+             typename = typename std::is_same<key_type, typename std::decay<KeyType>::type>::type,
+             typename = typename std::is_same<data_type, typename std::decay<DataType>::type>::type>
+    inline std::pair<iterator, bool> insert(KeyType&& key, DataType&& data)
     {
-        return insert_start(key, data);
+        return insert_start(std::forward<KeyType>(key), std::forward<DataType>(data));
     }
 
     /// Attempt to insert a key/data pair into the B+ tree. This function is the
     /// same as the other insert, however if key_type == data_type then the
     /// non-template function cannot be called. If the tree does not allow
     /// duplicate keys, then the insert may fail if it is already present.
-    inline std::pair<iterator, bool> insert2(const key_type& key, const data_type& data)
+    template<typename KeyType, typename DataType,
+             typename = typename std::is_same<key_type, typename std::decay<KeyType>::type>::type,
+             typename = typename std::is_same<data_type, typename std::decay<DataType>::type>::type>
+    inline std::pair<iterator, bool> insert2(KeyType&& key, DataType&& data)
     {
-        return insert_start(key, data);
+        return insert_start(std::forward<KeyType>(key), std::forward<DataType>(data));
     }
 
     /// Attempt to insert a key/data pair into the B+ tree. The iterator hint
@@ -2114,12 +2129,22 @@ public:
     {
         return insert_start(x.first, x.second).first;
     }
+    
+    /// Attempt to move-insert a key/data pair into the B+ tree. The iterator hint
+    /// is currently ignored by the B+ tree insertion routine.
+    inline iterator insert(iterator /* hint */, pair_type &&x)
+    {
+        return insert_start(std::move(x.first), std::move(x.second)).first;
+    }
 
     /// Attempt to insert a key/data pair into the B+ tree. The iterator hint is
     /// currently ignored by the B+ tree insertion routine.
-    inline iterator insert2(iterator /* hint */, const key_type& key, const data_type& data)
+    template<typename KeyType, typename DataType,
+             typename = typename std::is_same<key_type, typename std::decay<KeyType>::type>::type,
+             typename = typename std::is_same<data_type, typename std::decay<DataType>::type>::type>
+    inline iterator insert2(iterator /* hint */, KeyType&& key, DataType&& data)
     {
-        return insert_start(key, data).first;
+        return insert_start(std::forward<KeyType>(key), std::forward<DataType>(data)).first;
     }
 
     /// Attempt to insert the range [first,last) of value_type pairs into the
@@ -2141,7 +2166,10 @@ private:
 
     /// Start the insertion descent at the current root and handle root
     /// splits. Returns true if the item was inserted
-    std::pair<iterator, bool> insert_start(const key_type& key, const data_type& value)
+    template<typename KeyType, typename DataType,
+             typename = typename std::is_same<key_type, typename std::decay<KeyType>::type>::type,
+             typename = typename std::is_same<data_type, typename std::decay<DataType>::type>::type>
+    std::pair<iterator, bool> insert_start(KeyType&& key, DataType&& value)
     {
         node *newchild = nullptr;
         key_type newkey = key_type();
@@ -2150,7 +2178,9 @@ private:
             m_root = m_headleaf = m_tailleaf = allocate_leaf();
         }
 
-        std::pair<iterator, bool> r = insert_descend(m_root, key, value, &newkey, &newchild);
+        std::pair<iterator, bool> r = insert_descend(m_root,
+                                                     std::forward<KeyType>(key), std::forward<DataType>(value),
+                                                     &newkey, &newchild);
 
         if (newchild)
         {
@@ -2187,8 +2217,11 @@ private:
      * slot. If the node overflows, then it must be split and the new split
      * node inserted into the parent. Unroll / this splitting up to the root.
     */
+    template<typename KeyType, typename DataType,
+             typename = typename std::is_same<key_type, typename std::decay<KeyType>::type>::type,
+             typename = typename std::is_same<data_type, typename std::decay<DataType>::type>::type>
     std::pair<iterator, bool> insert_descend(node* n,
-                                             const key_type& key, const data_type& value,
+                                             KeyType&& key, DataType&& value,
                                              key_type* splitkey, node** splitnode)
     {
         if (!n->isleafnode())
@@ -2203,7 +2236,8 @@ private:
             BTREE_PRINT("btree::insert_descend into " << inner->childid[slot]);
 
             std::pair<iterator, bool> r = insert_descend(inner->childid[slot],
-                                                         key, value, &newkey, &newchild);
+                                                         std::forward<KeyType>(key), std::forward<DataType>(value),
+                                                         &newkey, &newchild);
 
             if (newchild)
             {
