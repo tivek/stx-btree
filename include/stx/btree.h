@@ -1520,6 +1520,27 @@ private:
         if (used_as_set) return result; // no operation
         else return std::copy_backward(first, last, result);
     }
+    
+    /// Convenient template function for conditional moving of slotdata. This
+    /// should be used instead of std::move for all slotdata manipulations.
+    template<class InputIterator, class OutputIterator>
+    static OutputIterator data_move (InputIterator first, InputIterator last,
+                                     OutputIterator result)
+    {
+        if (used_as_set) return result; // no operation
+        else return std::move(first, last, result);
+    }
+
+    /// Convenient template function for conditional moving of slotdata. This
+    /// should be used instead of std::move for all slotdata manipulations.
+    template<class InputIterator, class OutputIterator>
+    static OutputIterator data_move_backward (InputIterator first, InputIterator last,
+                                              OutputIterator result)
+    {
+        if (used_as_set) return result; // no operation
+        else return std::move_backward(first, last, result);
+    }
+
 
 public:
     // *** Fast Destruction of the B+ Tree
@@ -2295,9 +2316,9 @@ private:
                 // move items and put pointer to child node into correct slot
                 BTREE_ASSERT(slot >= 0 && slot <= inner->slotuse);
 
-                std::copy_backward(inner->slotkey + slot, inner->slotkey + inner->slotuse,
+                std::move_backward(inner->slotkey + slot, inner->slotkey + inner->slotuse,
                                    inner->slotkey + inner->slotuse+1);
-                std::copy_backward(inner->childid + slot, inner->childid + inner->slotuse+1,
+                std::move_backward(inner->childid + slot, inner->childid + inner->slotuse+1,
                                    inner->childid + inner->slotuse+2);
 
                 inner->slotkey[slot] = newkey;
@@ -2332,9 +2353,9 @@ private:
             // move items and put data item into correct data slot
             BTREE_ASSERT(slot >= 0 && slot <= leaf->slotuse);
 
-            std::copy_backward(leaf->slotkey + slot, leaf->slotkey + leaf->slotuse,
+            std::move_backward(leaf->slotkey + slot, leaf->slotkey + leaf->slotuse,
                                leaf->slotkey + leaf->slotuse+1);
-            data_copy_backward(leaf->slotdata + slot, leaf->slotdata + leaf->slotuse,
+            data_move_backward(leaf->slotdata + slot, leaf->slotdata + leaf->slotuse,
                                leaf->slotdata + leaf->slotuse+1);
 
             leaf->slotkey[slot] = key;
@@ -2376,9 +2397,9 @@ private:
             newleaf->nextleaf->prevleaf = newleaf;
         }
 
-        std::copy(leaf->slotkey + mid, leaf->slotkey + leaf->slotuse,
+        std::move(leaf->slotkey + mid, leaf->slotkey + leaf->slotuse,
                   newleaf->slotkey);
-        data_copy(leaf->slotdata + mid, leaf->slotdata + leaf->slotuse,
+        data_move(leaf->slotdata + mid, leaf->slotdata + leaf->slotuse,
                   newleaf->slotdata);
 
         leaf->slotuse = mid;
@@ -2414,9 +2435,9 @@ private:
 
         newinner->slotuse = inner->slotuse - (mid + 1);
 
-        std::copy(inner->slotkey + mid+1, inner->slotkey + inner->slotuse,
+        std::move(inner->slotkey + mid+1, inner->slotkey + inner->slotuse,
                   newinner->slotkey);
-        std::copy(inner->childid + mid+1, inner->childid + inner->slotuse+1,
+        std::move(inner->childid + mid+1, inner->childid + inner->slotuse+1,
                   newinner->childid);
 
         inner->slotuse = mid;
@@ -2727,9 +2748,9 @@ private:
 
             BTREE_PRINT("Found key in leaf " << curr << " at slot " << slot);
 
-            std::copy(leaf->slotkey + slot+1, leaf->slotkey + leaf->slotuse,
+            std::move(leaf->slotkey + slot+1, leaf->slotkey + leaf->slotuse,
                       leaf->slotkey + slot);
-            data_copy(leaf->slotdata + slot+1, leaf->slotdata + leaf->slotuse,
+            data_move(leaf->slotdata + slot+1, leaf->slotdata + leaf->slotuse,
                       leaf->slotdata + slot);
 
             leaf->slotuse--;
@@ -2899,9 +2920,9 @@ private:
 
                 free_node(inner->childid[slot]);
 
-                std::copy(inner->slotkey + slot, inner->slotkey + inner->slotuse,
+                std::move(inner->slotkey + slot, inner->slotkey + inner->slotuse,
                           inner->slotkey + slot-1);
-                std::copy(inner->childid + slot+1, inner->childid + inner->slotuse+1,
+                std::move(inner->childid + slot+1, inner->childid + inner->slotuse+1,
                           inner->childid + slot);
 
                 inner->slotuse--;
@@ -3023,9 +3044,9 @@ private:
 
             BTREE_PRINT("Found iterator in leaf " << curr << " at slot " << slot);
 
-            std::copy(leaf->slotkey + slot+1, leaf->slotkey + leaf->slotuse,
+            std::move(leaf->slotkey + slot+1, leaf->slotkey + leaf->slotuse,
                       leaf->slotkey + slot);
-            data_copy(leaf->slotdata + slot+1, leaf->slotdata + leaf->slotuse,
+            data_move(leaf->slotdata + slot+1, leaf->slotdata + leaf->slotuse,
                       leaf->slotdata + slot);
 
             leaf->slotuse--;
@@ -3210,9 +3231,9 @@ private:
 
                 free_node(inner->childid[slot]);
 
-                std::copy(inner->slotkey + slot, inner->slotkey + inner->slotuse,
+                std::move(inner->slotkey + slot, inner->slotkey + inner->slotuse,
                           inner->slotkey + slot-1);
-                std::copy(inner->childid + slot+1, inner->childid + inner->slotuse+1,
+                std::move(inner->childid + slot+1, inner->childid + inner->slotuse+1,
                           inner->childid + slot);
 
                 inner->slotuse--;
@@ -3303,9 +3324,9 @@ private:
 
         BTREE_ASSERT(left->slotuse + right->slotuse < leafslotmax);
 
-        std::copy(right->slotkey, right->slotkey + right->slotuse,
+        std::move(right->slotkey, right->slotkey + right->slotuse,
                   left->slotkey + left->slotuse);
-        data_copy(right->slotdata, right->slotdata + right->slotuse,
+        data_move(right->slotdata, right->slotdata + right->slotuse,
                   left->slotdata + left->slotuse);
 
         left->slotuse += right->slotuse;
@@ -3353,10 +3374,10 @@ private:
         left->slotkey[left->slotuse] = parent->slotkey[parentslot];
         left->slotuse++;
 
-        // copy over keys and children from right
-        std::copy(right->slotkey, right->slotkey + right->slotuse,
+        // move over keys and children from right
+        std::move(right->slotkey, right->slotkey + right->slotuse,
                   left->slotkey + left->slotuse);
-        std::copy(right->childid, right->childid + right->slotuse+1,
+        std::move(right->childid, right->childid + right->slotuse+1,
                   left->childid + left->slotuse);
 
         left->slotuse += right->slotuse;
@@ -3385,20 +3406,20 @@ private:
 
         BTREE_ASSERT(left->slotuse + shiftnum < leafslotmax);
 
-        // copy the first items from the right node to the last slot in the left node.
+        // move the first items from the right node to the last slot in the left node.
 
-        std::copy(right->slotkey, right->slotkey + shiftnum,
+        std::move(right->slotkey, right->slotkey + shiftnum,
                   left->slotkey + left->slotuse);
-        data_copy(right->slotdata, right->slotdata + shiftnum,
+        data_move(right->slotdata, right->slotdata + shiftnum,
                   left->slotdata + left->slotuse);
 
         left->slotuse += shiftnum;
 
         // shift all slots in the right node to the left
 
-        std::copy(right->slotkey + shiftnum, right->slotkey + right->slotuse,
+        std::move(right->slotkey + shiftnum, right->slotkey + right->slotuse,
                   right->slotkey);
-        data_copy(right->slotdata + shiftnum, right->slotdata + right->slotuse,
+        data_move(right->slotdata + shiftnum, right->slotdata + right->slotuse,
                   right->slotdata);
 
         right->slotuse -= shiftnum;
@@ -3449,11 +3470,11 @@ private:
         left->slotkey[left->slotuse] = parent->slotkey[parentslot];
         left->slotuse++;
 
-        // copy the other items from the right node to the last slots in the left node.
+        // move the other items from the right node to the last slots in the left node.
 
-        std::copy(right->slotkey, right->slotkey + shiftnum-1,
+        std::move(right->slotkey, right->slotkey + shiftnum-1,
                   left->slotkey + left->slotuse);
-        std::copy(right->childid, right->childid + shiftnum,
+        std::move(right->childid, right->childid + shiftnum,
                   left->childid + left->slotuse);
 
         left->slotuse += shiftnum - 1;
@@ -3463,9 +3484,9 @@ private:
 
         // shift all slots in the right node
 
-        std::copy(right->slotkey + shiftnum, right->slotkey + right->slotuse,
+        std::move(right->slotkey + shiftnum, right->slotkey + right->slotuse,
                   right->slotkey);
-        std::copy(right->childid + shiftnum, right->childid + right->slotuse+1,
+        std::move(right->childid + shiftnum, right->childid + right->slotuse+1,
                   right->childid);
 
         right->slotuse -= shiftnum;
@@ -3507,17 +3528,17 @@ private:
 
         BTREE_ASSERT(right->slotuse + shiftnum < leafslotmax);
 
-        std::copy_backward(right->slotkey, right->slotkey + right->slotuse,
+        std::move_backward(right->slotkey, right->slotkey + right->slotuse,
                            right->slotkey + right->slotuse + shiftnum);
-        data_copy_backward(right->slotdata, right->slotdata + right->slotuse,
+        data_move_backward(right->slotdata, right->slotdata + right->slotuse,
                            right->slotdata + right->slotuse + shiftnum);
 
         right->slotuse += shiftnum;
 
-        // copy the last items from the left node to the first slot in the right node.
-        std::copy(left->slotkey + left->slotuse - shiftnum, left->slotkey + left->slotuse,
+        // move the last items from the left node to the first slot in the right node.
+        std::move(left->slotkey + left->slotuse - shiftnum, left->slotkey + left->slotuse,
                   right->slotkey);
-        data_copy(left->slotdata + left->slotuse - shiftnum, left->slotdata + left->slotuse,
+        data_move(left->slotdata + left->slotuse - shiftnum, left->slotdata + left->slotuse,
                   right->slotdata);
 
         left->slotuse -= shiftnum;
@@ -3558,9 +3579,9 @@ private:
 
         BTREE_ASSERT(right->slotuse + shiftnum < innerslotmax);
 
-        std::copy_backward(right->slotkey, right->slotkey + right->slotuse,
+        std::move_backward(right->slotkey, right->slotkey + right->slotuse,
                            right->slotkey + right->slotuse + shiftnum);
-        std::copy_backward(right->childid, right->childid + right->slotuse+1,
+        std::move_backward(right->childid, right->childid + right->slotuse+1,
                            right->childid + right->slotuse+1 + shiftnum);
 
         right->slotuse += shiftnum;
@@ -3568,10 +3589,10 @@ private:
         // copy the parent's decision slotkey and childid to the last new key on the right
         right->slotkey[shiftnum - 1] = parent->slotkey[parentslot];
 
-        // copy the remaining last items from the left node to the first slot in the right node.
-        std::copy(left->slotkey + left->slotuse - shiftnum+1, left->slotkey + left->slotuse,
+        // move the remaining last items from the left node to the first slot in the right node.
+        std::move(left->slotkey + left->slotuse - shiftnum+1, left->slotkey + left->slotuse,
                   right->slotkey);
-        std::copy(left->childid + left->slotuse - shiftnum+1, left->childid + left->slotuse+1,
+        std::move(left->childid + left->slotuse - shiftnum+1, left->childid + left->slotuse+1,
                   right->childid);
 
         // copy the first to-be-removed key from the left node to the parent's decision slot
