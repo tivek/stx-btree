@@ -1617,6 +1617,20 @@ public:
     {
         return const_iterator(m_tailleaf, m_tailleaf ? m_tailleaf->slotuse : 0);
     }
+    
+    /// Constructs a read-only constant iterator that points to the first slot
+    /// in the first leaf of the B+ tree.
+    inline const_iterator cbegin() const
+    {
+        return begin();
+    }
+
+    /// Constructs a read-only constant iterator that points to the first
+    /// invalid slot in the last leaf of the B+ tree.
+    inline const_iterator cend() const
+    {
+        return end();
+    }
 
     /// Constructs a read/data-write reverse iterator that points to the first
     /// invalid slot in the last leaf of the B+ tree. Uses STL magic.
@@ -1646,6 +1660,20 @@ public:
         return const_reverse_iterator(begin());
     }
 
+    /// Constructs a read-only reverse iterator that points to the first
+    /// invalid slot in the last leaf of the B+ tree. Uses STL magic.
+    inline const_reverse_iterator crbegin() const
+    {
+        return rbegin();
+    }
+
+    /// Constructs a read-only reverse iterator that points to the first slot
+    /// in the first leaf of the B+ tree. Uses STL magic.
+    inline const_reverse_iterator crend() const
+    {
+        return rend();
+    }
+    
 private:
     // *** B+ Tree Node Binary Search Functions
 
