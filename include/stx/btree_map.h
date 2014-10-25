@@ -272,6 +272,20 @@ public:
     {
 	return tree.end();
     }
+    
+    /// Constructs a read-only constant iterator that points to the first slot
+    /// in the first leaf of the B+ tree.
+    inline const_iterator cbegin() const
+    {
+    return tree.cbegin();
+    }
+
+    /// Constructs a read-only constant iterator that points to the first
+    /// invalid slot in the last leaf of the B+ tree.
+    inline const_iterator cend() const
+    {
+    return tree.cend();
+    }
 
     /// Constructs a read/data-write reverse iterator that points to the first
     /// invalid slot in the last leaf of the B+ tree. Uses STL magic.
@@ -299,6 +313,20 @@ public:
     inline const_reverse_iterator rend() const
     {
 	return tree.rend();
+    }
+    
+    /// Constructs a read-only reverse iterator that points to the first
+    /// invalid slot in the last leaf of the B+ tree. Uses STL magic.
+    inline const_reverse_iterator crbegin() const
+    {
+    return tree.crbegin();
+    }
+
+    /// Constructs a read-only reverse iterator that points to the first slot
+    /// in the first leaf of the B+ tree. Uses STL magic.
+    inline const_reverse_iterator crend() const
+    {
+    return tree.crend();
     }
 
 public:
@@ -474,22 +502,35 @@ public:
     {
 	return tree.insert2(x.first, x.second);
     }
+    
+    /// Attempt to move-insert a key/data pair into the B+ tree. Fails if the pair
+    /// is already present.
+    inline std::pair<iterator, bool> insert(value_type&& x)
+    {
+    return tree.insert2(std::move(x.first), std::move(x.second));
+    }
 
     /// Attempt to insert a key/data pair into the B+ tree. Beware that if
     /// key_type == data_type, then the template iterator insert() is called
     /// instead. Fails if the inserted pair is already present.
-    inline std::pair<iterator, bool> insert(const key_type& key, const data_type& data)
+    template<typename KeyType, typename DataType,
+             typename = typename std::is_same<key_type, typename std::decay<KeyType>::type>::type,
+             typename = typename std::is_same<data_type, typename std::decay<DataType>::type>::type>
+    inline std::pair<iterator, bool> insert(KeyType&& key, DataType&& data)
     {
-	return tree.insert2(key, data);
+	return tree.insert2(std::forward<KeyType>(key), std::forward<DataType>(data));
     }
 
     /// Attempt to insert a key/data pair into the B+ tree. This function is the
     /// same as the other insert, however if key_type == data_type then the
     /// non-template function cannot be called. Fails if the inserted pair is
     /// already present.
-    inline std::pair<iterator, bool> insert2(const key_type& key, const data_type& data)
+    template<typename KeyType, typename DataType,
+             typename = typename std::is_same<key_type, typename std::decay<KeyType>::type>::type,
+             typename = typename std::is_same<data_type, typename std::decay<DataType>::type>::type>
+    inline std::pair<iterator, bool> insert2(KeyType&& key, DataType&& data)
     {
-	return tree.insert2(key, data);
+    return tree.insert2(std::forward<KeyType>(key), std::forward<DataType>(data));
     }
 
     /// Attempt to insert a key/data pair into the B+ tree. The iterator hint
@@ -498,12 +539,22 @@ public:
     {
 	return tree.insert2(hint, x.first, x.second);
     }
+    
+    /// Attempt to move-insert a key/data pair into the B+ tree. The iterator hint
+    /// is currently ignored by the B+ tree insertion routine.
+    inline iterator insert(iterator hint, value_type &&x)
+    {
+    return tree.insert2(hint, std::move(x.first), std::move(x.second));
+    }
 
     /// Attempt to insert a key/data pair into the B+ tree. The iterator hint is
     /// currently ignored by the B+ tree insertion routine.
-    inline iterator insert2(iterator hint, const key_type& key, const data_type& data)
+    template<typename KeyType, typename DataType,
+             typename = typename std::is_same<key_type, typename std::decay<KeyType>::type>::type,
+             typename = typename std::is_same<data_type, typename std::decay<DataType>::type>::type>
+    inline iterator insert2(iterator hint, KeyType&& key, DataType&& data)
     {
-	return tree.insert2(hint, key, data);
+	return tree.insert2(hint, std::forward<KeyType>(key), std::forward<DataType>(data));
     }
 
     /// Returns a reference to the object that is associated with a particular
@@ -513,6 +564,15 @@ public:
     {
 	iterator i = insert( value_type(key, data_type()) ).first;
 	return i.data();
+    }
+    
+    /// Returns a reference to the object that is associated with a particular
+    /// key. If the map does not already contain such an object, operator[]
+    /// inserts the default object data_type() and moves the key.
+    inline data_type& operator[](key_type&& key)
+    {
+    iterator i = insert(std::move(key), data_type()).first;
+    return i.data();
     }
 
     /// Attempt to insert the range [first,last) of value_type pairs into the B+
